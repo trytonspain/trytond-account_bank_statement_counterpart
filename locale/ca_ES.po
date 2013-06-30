@@ -1,0 +1,39 @@
+# 
+msgid ""
+msgstr "Content-Type: text/plain; charset=utf-8\n"
+
+msgctxt "error:account.bank.statement.line:"
+msgid ""
+"Cannot create counterpart with same account \"%(account)s\", check line "
+"\"%(line)s\" and journal \"%(journal)s\"."
+msgstr ""
+"No pot crear una contrapartida amb el mateix compte \"%(account)s\", Revisa "
+"la línia \"%(line)s\" i diari \"%(journal)s\" "
+
+msgctxt "error:account.bank.statement.line:"
+msgid "Journal \"%(journal)s\" has not got credit or debit account  configured."
+msgstr ""
+"El diari \"%(journal)s\" no te compte de  credit o compte de dèbit  "
+"configurada."
+
+msgctxt "error:account.move.reconciliation:"
+msgid ""
+"Cannot break reconciliation \"%(reconciliation)s\" because line \"%(line)s\""
+" has assigned to Bank Statement Line Please go to \"%(statement_line)s\" "
+"bank statement line to unreconcile"
+msgstr ""
+"No pot trencar conciliació \"%(conciliation)s\" perquè línia \"%(line)s\" "
+"està assignada a la línia d'extracte bancari. Si us plau vagi a la línia del"
+" extracte \"%(statement_line)s\" i trenqui la conciliació"
+
+msgctxt "field:account.bank.statement.line,account_date:"
+msgid "Account Date"
+msgstr "Data de contabilització"
+
+msgctxt "field:account.bank.statement.line,counterpart_lines:"
+msgid "Counterpart"
+msgstr "Contrapartida"
+
+msgctxt "field:account.move.line,bank_statement_line_counterpart:"
+msgid "Bank Statement Line Counterpart"
+msgstr "Contrapartida de l'extracte bancari."
