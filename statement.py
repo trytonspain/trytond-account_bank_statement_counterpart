@@ -1,9 +1,10 @@
-#The COPYRIGHT file at the top level of this repository contains the full
-#copyright notices and license terms.
+# This file is part account_bank_statement_counterpart the COPYRIGHT file at
+# the top level of this repository contains the full copyright notices and
+# license terms.
 
 from decimal import Decimal
 from trytond.model import fields
-from trytond.pyson import Eval,  Not, Equal
+from trytond.pyson import Eval, Not, Equal, Bool
 from trytond.pool import Pool, PoolMeta
 
 __metaclass__ = PoolMeta
@@ -29,8 +30,10 @@ class StatementLine:
     counterpart_lines = fields.One2Many('account.move.line',
         'bank_statement_line_counterpart', 'Counterpart',
         states=POSTED_STATES, domain=[('account.reconcile', '=', True)])
-    account_date = fields.DateTime('Account Date', required=True,
-            on_change_with=['date'])
+    account_date = fields.DateTime('Account Date',
+            states={
+                'required': Bool(Eval('counterpart_lines')),
+            }, on_change_with=['date'])
 
     @classmethod
     def __setup__(cls):
@@ -47,6 +50,14 @@ class StatementLine:
 
     def on_change_with_account_date(self):
         return self.date
+
+    @classmethod
+    def create(cls, vlist):
+        for vals in vlist:
+            if vals.get('account_date'):
+                continue
+            vals['account_date'] = vals['date']
+        return super(StatementLine, cls).create(vlist)
 
     def _search_counterpart_line_reconciliation(self):
         search_amount = abs(self.company_amount - self.moves_amount)
