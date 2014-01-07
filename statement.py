@@ -29,7 +29,15 @@ class StatementLine:
 
     counterpart_lines = fields.One2Many('account.move.line',
         'bank_statement_line_counterpart', 'Counterpart',
-        states=POSTED_STATES, domain=[('account.reconcile', '=', True)])
+        states=POSTED_STATES, domain=[
+            ('account.reconcile', '=', True),
+            ('move_state', '=', 'posted'),
+            ],
+        add_remove=[
+            ('reconciliation', '=', None),
+            ('bank_statement_line_counterpart', '=', None),
+            ('move_state', '=', 'posted'),
+            ('account.reconcile', '=', True)])
     account_date = fields.DateTime('Account Date',
             states={
                 'required': Bool(Eval('counterpart_lines')),
@@ -68,6 +76,7 @@ class StatementLine:
         lines = MoveLine.search([
                 ('reconciliation', '=', None),
                 ('bank_statement_line_counterpart', '=', None),
+                ('move_state', '=', 'posted'),
                 ('account.reconcile', '=', True), [
                     'OR', [('credit', '=', search_amount)],
                           [('debit', '=', search_amount)]
