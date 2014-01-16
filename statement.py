@@ -51,9 +51,12 @@ class StatementLine:
                 'same_debit_credit_account': ('Cannot create counterpart with'
                     ' same account "%(account)s", check line "%(line)s" and '
                     'journal "%(journal)s".'),
-                'debit_credit_account_statement_journal': ('Journal '
-                    '"%(journal)s" has not got credit or debit account '
-                    ' configured.')
+                'debit_credit_account_statement_journal': (
+                    'Journal "%s" has not got credit or debit account '
+                    'configured.'),
+                'debit_credit_account_not_bank_reconcile': (
+                    'The credit or debit account of Journal "%s" is not '
+                    'checked as "Bank Conciliation".'),
             })
 
     def on_change_with_account_date(self):
@@ -205,7 +208,10 @@ class StatementLine:
 
         if not account:
             self.raise_user_error('debit_credit_account_statement_journal',
-                {'journal':journal.rec_name})
+                journal.rec_name)
+        if not account.bank_reconcile:
+            self.raise_user_error('debit_credit_account_not_bank_reconcile',
+                journal.rec_name)
         if line.account == account:
             self.raise_user_error('same_debit_credit_account', {
                     'account': line.account.rec_name,
