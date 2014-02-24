@@ -6,6 +6,7 @@ from decimal import Decimal
 from trytond.model import fields
 from trytond.pyson import Eval, Not, Equal, Bool
 from trytond.pool import Pool, PoolMeta
+from trytond.transaction import Transaction
 
 __metaclass__ = PoolMeta
 __all__ = ['StatementLine', 'MoveLine', 'Reconciliation']
@@ -106,7 +107,7 @@ class StatementLine:
     def cancel(cls, statement_lines):
         super(StatementLine, cls).cancel(statement_lines)
         for st_line in statement_lines:
-            st_line.reset_move()
+            st_line.reset_counterpart_move()
         for st_line in statement_lines:
             st_line.counterpart_lines = None
             st_line.save()
@@ -121,7 +122,7 @@ class StatementLine:
         res += sum((l.debit or _ZERO) - (l.credit or _ZERO) for l in lines)
         return res
 
-    def reset_move(self):
+    def reset_counterpart_move(self):
         pool = Pool()
         Reconciliation = pool.get('account.move.reconciliation')
         Move = pool.get('account.move')
@@ -134,7 +135,6 @@ class StatementLine:
             delete_moves += [x.move for x in counterpart.reconciliation.lines
                 if x.move != counterpart.move]
             delete_reconciliation.append(counterpart.reconciliation)
-
         Reconciliation.delete(delete_reconciliation)
         Move.draft(delete_moves)
         Move.delete(delete_moves)
