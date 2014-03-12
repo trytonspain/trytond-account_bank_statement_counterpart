@@ -28,7 +28,7 @@ msgid ""
 " has assigned to Bank Statement Line Please go to \"%(statement_line)s\" "
 "bank statement line to unreconcile"
 msgstr ""
-"No se puede romper la conciliación \"%(conciliation)s\" porqué la línea "
+"No se puede romper la conciliación \"%(reconciliation)s\" porqué la línea "
 "\"%(line)s\"està asignada en  la línea del extracto bancario. Vaya a la "
 "línea \"%(statement_line)s\" y rompa la conciliación."
 
