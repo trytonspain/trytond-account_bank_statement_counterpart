@@ -38,7 +38,7 @@ msgstr "Data de comptabilització"
 
 msgctxt "field:account.bank.statement.line,counterpart_lines:"
 msgid "Counterpart"
-msgstr "Contrapartida"
+msgstr "Efectes"
 
 msgctxt "field:account.move.line,bank_statement_line_counterpart:"
 msgid "Bank Statement Line Counterpart"
