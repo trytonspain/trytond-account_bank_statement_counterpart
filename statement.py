@@ -42,12 +42,12 @@ class StatementLine:
     account_date = fields.DateTime('Account Date',
             states={
                 'required': Bool(Eval('counterpart_lines')),
-            }, on_change_with=['date'])
+            })
 
     @classmethod
     def __setup__(cls):
         super(StatementLine, cls).__setup__()
-        cls.moves_amount._field.on_change_with.append('counterpart_lines')
+        cls.moves_amount._field.on_change_with.add('counterpart_lines')
         cls._error_messages.update({
                 'same_debit_credit_account': ('Cannot create counterpart with'
                     ' same account "%(account)s", check line "%(line)s" and '
@@ -60,6 +60,7 @@ class StatementLine:
                     'checked as "Bank Conciliation".'),
             })
 
+    @fields.depends('date')
     def on_change_with_account_date(self):
         return self.date
 
