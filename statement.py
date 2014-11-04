@@ -187,7 +187,8 @@ class StatementLine:
         counterpart.debit = line.credit
         counterpart.credit = line.debit
         counterpart.account = line.account
-        counterpart.party = line.party
+        if line.account.party_required:
+            counterpart.party = line.party
         counterpart.origin = str(self)
 
         amount = line.debit - line.credit
@@ -227,10 +228,11 @@ class StatementLine:
             credit=amount < _ZERO and -amount or _ZERO,
             account=account,
             origin=self.statement,
-            party=line.party,
             second_currency=second_currency,
             amount_second_currency=amount_second_currency,
             )
+        if account.party_required:
+            bank_move.party = line.party
 
         move_lines.append(bank_move)
         move_lines.append(counterpart)
@@ -246,7 +248,7 @@ class MoveLine:
     @classmethod
     def __setup__(cls):
         super(MoveLine, cls).__setup__()
-        cls._check_modify_exclude += ['bank_statement_line_counterpart']
+        cls._check_modify_exclude.add('bank_statement_line_counterpart')
 
 
 class Reconciliation:

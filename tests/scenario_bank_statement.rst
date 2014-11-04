@@ -154,7 +154,6 @@ Create Move::
     >>> line2 = move.lines.new()
     >>> line2.account = revenue
     >>> line2.credit = Decimal('80.0')
-    >>> line2.party = party
     >>> move.save()
     >>> move.reload()
     >>> Move.post([move.id], config.context)
