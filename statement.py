@@ -233,7 +233,7 @@ class StatementLine:
             amount_second_currency=amount_second_currency,
             )
         if account.party_required:
-            bank_move.party = line.party
+            bank_move.party = line.party or self.company.party
 
         move_lines.append(bank_move)
         move_lines.append(counterpart)
