@@ -251,6 +251,13 @@ class MoveLine:
         super(MoveLine, cls).__setup__()
         cls._check_modify_exclude.add('bank_statement_line_counterpart')
 
+    @classmethod
+    def copy(cls, lines, default=None):
+        if default is None:
+            default = {}
+        default['bank_statement_line_counterpart'] = None
+        return super(MoveLine, cls).copy(lines, default=default)
+
 
 class Reconciliation:
     __name__ = 'account.move.reconciliation'
