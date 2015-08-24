@@ -73,20 +73,22 @@ class StatementLine:
         return super(StatementLine, cls).create(vlist)
 
     def _search_counterpart_line_reconciliation(self):
-        search_amount = abs(self.company_amount - self.moves_amount)
+        search_amount = self.company_amount - self.moves_amount
         if search_amount == _ZERO:
             return
 
         MoveLine = Pool().get('account.move.line')
-        lines = MoveLine.search([
-                ('reconciliation', '=', None),
-                ('bank_statement_line_counterpart', '=', None),
-                ('move_state', '=', 'posted'),
-                ('account.reconcile', '=', True), [
-                    'OR', [('credit', '=', search_amount)],
-                          [('debit', '=', search_amount)]
-                    ]
-                ])
+        domain = [
+            ('reconciliation', '=', None),
+            ('bank_statement_line_counterpart', '=', None),
+            ('move_state', '=', 'posted'),
+            ('account.reconcile', '=', True),
+            ]
+        if search_amount > 0:
+            domain.append(('debit', '=', abs(search_amount)))
+        else:
+            domain.append(('credit', '=', abs(search_amount)))
+        lines = MoveLine.search(domain)
 
         if len(lines) == 1:
             line, = lines
@@ -179,7 +181,7 @@ class StatementLine:
         MoveLine = pool.get('account.move.line')
         Currency = Pool().get('currency.currency')
 
-        #Generate counterpart line
+        # Generate counterpart line
         move_lines = []
         counterpart = MoveLine()
         counterpart.journal = self.journal.journal
@@ -202,7 +204,7 @@ class StatementLine:
             counterpart.amount_second_currency = amount_second_currency
             counterpart.second_currency = second_currency
 
-        #Generate Bank Line.
+        # Generate Bank Line.
         journal = self.journal.journal
         if amount >= _ZERO:
             account = journal.credit_account
