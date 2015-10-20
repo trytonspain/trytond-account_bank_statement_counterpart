@@ -109,11 +109,12 @@ class StatementLine:
     @classmethod
     def cancel(cls, statement_lines):
         super(StatementLine, cls).cancel(statement_lines)
-        for st_line in statement_lines:
-            st_line.reset_counterpart_move()
+        cls.reset_counterpart_move(statement_lines)
+        to_write = []
         for st_line in statement_lines:
             st_line.counterpart_lines = None
-            st_line.save()
+            to_write.extend(([st_line], st_line._save_values))
+        cls.write(*to_write)
 
     def on_change_with_moves_amount(self):
         res = super(StatementLine, self).on_change_with_moves_amount()
@@ -125,22 +126,26 @@ class StatementLine:
         res += sum((l.debit or _ZERO) - (l.credit or _ZERO) for l in lines)
         return res
 
-    def reset_counterpart_move(self):
+    @classmethod
+    def reset_counterpart_move(cls, lines):
         pool = Pool()
         Reconciliation = pool.get('account.move.reconciliation')
         Move = pool.get('account.move')
 
         delete_moves = []
         delete_reconciliation = []
-        for counterpart in self.counterpart_lines:
-            if not counterpart.reconciliation:
-                continue
-            delete_moves += [x.move for x in counterpart.reconciliation.lines
-                if x.move != counterpart.move]
-            delete_reconciliation.append(counterpart.reconciliation)
-        Reconciliation.delete(delete_reconciliation)
-        Move.draft(delete_moves)
-        Move.delete(delete_moves)
+        for line in lines:
+            for counterpart in line.counterpart_lines:
+                if not counterpart.reconciliation:
+                    continue
+                for x in counterpart.reconciliation.lines:
+                    if x.move != counterpart.move:
+                        delete_moves.append(x.move)
+                delete_reconciliation.append(counterpart.reconciliation)
+        with Transaction().set_context(from_account_bank_statement_line=True):
+            Reconciliation.delete(delete_reconciliation)
+            Move.draft(delete_moves)
+            Move.delete(delete_moves)
 
     def create_move(self, line):
         pool = Pool()
