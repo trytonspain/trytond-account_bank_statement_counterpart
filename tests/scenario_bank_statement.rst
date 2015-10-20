@@ -131,6 +131,7 @@ Create Journals::
     ...     credit_account=cash,
     ...     debit_account=cash,
     ...     sequence=sequence,
+    ...     update_posted=True,
     ... )
     >>> account_journal.save()
     >>> StatementJournal = Model.get('account.bank.statement.journal')
@@ -190,10 +191,7 @@ Create Bank Statement Lines::
     >>> reconcile1.bank_statement_line_counterpart = statement_line
     >>> reconcile1.save()
     >>> reconcile1.reload()
-    >>> statement_line.save()
-    >>> statement_line.reload()
-    >>> StatementLine.post([statement_line.id], config.context)
-    >>> statement_line.reload()
+    >>> statement_line.click('post')
     >>> statement_line.state
     u'posted'
     >>> move_line, = [x for x in reconcile1.reconciliation.lines if x !=
@@ -208,3 +206,17 @@ Create Bank Statement Lines::
     True
     >>> move_line2.debit == Decimal('80.0')
     True
+    >>> receivable.reload()
+    >>> receivable.balance
+    Decimal('0.00')
+
+Cancel the line and theck all the moves have been cleared::
+
+    >>> statement_line.click('cancel')
+    >>> len(statement_line.counterpart_lines)
+    0
+    >>> len(statement_line.bank_lines)
+    0
+    >>> receivable.reload()
+    >>> receivable.balance
+    Decimal('80.00')
