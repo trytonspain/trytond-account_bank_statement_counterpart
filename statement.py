@@ -290,7 +290,7 @@ class Reconciliation:
                             'reconciliation_cannot_delete', {
                                 'reconciliation': reconciliation.rec_name,
                                 'line': bank_line.rec_name,
-                                'statement_line': line.
-                                    bank_statement_line_counterpart.rec_name
+                                'statement_line': (
+                                    bank_line.bank_statement_line.rec_name)
                                 })
         super(Reconciliation, cls).delete(reconciliations)
