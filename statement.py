@@ -114,7 +114,8 @@ class StatementLine:
         for st_line in statement_lines:
             st_line.counterpart_lines = None
             to_write.extend(([st_line], st_line._save_values))
-        cls.write(*to_write)
+        if to_write:
+            cls.write(*to_write)
 
     def on_change_with_moves_amount(self):
         res = super(StatementLine, self).on_change_with_moves_amount()
