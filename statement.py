@@ -117,15 +117,18 @@ class StatementLine:
         if to_write:
             cls.write(*to_write)
 
+    @fields.depends('state')
     def on_change_with_moves_amount(self):
-        res = super(StatementLine, self).on_change_with_moves_amount()
-        if getattr(self, 'state', None) == 'posted':
-            return res
+        amount = super(StatementLine, self).on_change_with_moves_amount()
+        if self.state == 'posted':
+            return amount
         Line = Pool().get('account.move.line')
         lines = Line.browse([x.id for x in self.counterpart_lines])
 
-        res += sum((l.debit or _ZERO) - (l.credit or _ZERO) for l in lines)
-        return res
+        amount += sum((l.debit or _ZERO) - (l.credit or _ZERO) for l in lines)
+        if self.company_currency:
+            amount = self.company_currency.round(amount)
+        return amount
 
     @classmethod
     def reset_counterpart_move(cls, lines):

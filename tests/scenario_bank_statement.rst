@@ -13,8 +13,6 @@ Imports::
     ...     get_company
     >>> from trytond.modules.account.tests.tools import create_fiscalyear, \
     ...     create_chart, get_accounts, create_tax, set_tax_code
-    >>> from.trytond.modules.account_invoice.tests.tools import \
-    ...     set_fiscalyear_invoice_sequences, create_payment_term
     >>> today = datetime.date.today()
     >>> now = datetime.datetime.now()
 
@@ -28,7 +26,7 @@ Install account_bank_statement::
     >>> Module = Model.get('ir.module')
     >>> account_bank_module, = Module.find(
     ...     [('name', '=', 'account_bank_statement_counterpart')])
-    >>> Module.install([account_bank_module.id], config.context)
+    >>> account_bank_module.click('install')
     >>> Wizard('ir.module.install_upgrade').execute('upgrade')
 
 Create company::
@@ -36,15 +34,9 @@ Create company::
     >>> _ = create_company()
     >>> company = get_company()
 
-Reload the context::
-
-    >>> User = Model.get('res.user')
-    >>> config._context = User.get_preferences(True, config.context)
-
 Create fiscal year::
 
-    >>> fiscalyear = set_fiscalyear_invoice_sequences(
-    ...     create_fiscalyear(company))
+    >>> fiscalyear = create_fiscalyear(company)
     >>> fiscalyear.click('create_period')
     >>> period = fiscalyear.periods[0]
 
@@ -55,6 +47,9 @@ Create chart of accounts::
     >>> receivable = accounts['receivable']
     >>> revenue = accounts['revenue']
     >>> expense = accounts['expense']
+    >>> cash = accounts['cash']
+    >>> cash.bank_reconcile = True
+    >>> cash.save()
 
 Create party::
 
@@ -64,6 +59,7 @@ Create party::
 
 Create Journals::
 
+    >>> Sequence = Model.get('ir.sequence')
     >>> sequence = Sequence(name='Bank', code='account.journal',
     ...     company=company)
     >>> sequence.save()
@@ -97,10 +93,7 @@ Create Move::
     >>> line2 = move.lines.new()
     >>> line2.account = revenue
     >>> line2.credit = Decimal('80.0')
-    >>> move.save()
-    >>> move.reload()
-    >>> Move.post([move.id], config.context)
-    >>> move.reload()
+    >>> move.click('post')
     >>> move.state
     u'posted'
 
@@ -115,9 +108,7 @@ Create Bank Statement::
 
 Create Bank Statement Lines::
 
-    >>> StatementLine = Model.get('account.bank.statement.line')
-    >>> statement_line = StatementLine()
-    >>> statement.lines.append(statement_line)
+    >>> statement_line = statement.lines.new()
     >>> statement_line.date = now
     >>> statement_line.description = 'Statement Line'
     >>> statement_line.amount = Decimal('80.0')
@@ -126,8 +117,8 @@ Create Bank Statement Lines::
     >>> statement.reload()
     >>> statement.state
     u'draft'
-    >>> statement_line = StatementLine(1)
-    >>> BankStatement.confirm([statement.id], config.context)
+    >>> statement.click('confirm')
+    >>> statement_line, = statement.lines
     >>> statement_line.state
     u'confirmed'
     >>> reconcile1.bank_statement_line_counterpart = statement_line
@@ -140,14 +131,14 @@ Create Bank Statement Lines::
     ...    reconcile1]
     >>> move_line.account == reconcile1.account
     True
-    >>> move_line.credit == Decimal('80.0')
-    True
+    >>> move_line.credit
+    Decimal('80.0')
     >>> move_line2, = [x for x in move_line.move.lines if x != move_line]
     >>> move_line2.account in [statement_line.credit_account,
     ...     statement_line.debit_account]
     True
-    >>> move_line2.debit == Decimal('80.0')
-    True
+    >>> move_line2.debit
+    Decimal('80.0')
     >>> receivable.reload()
     >>> receivable.balance
     Decimal('0.00')
