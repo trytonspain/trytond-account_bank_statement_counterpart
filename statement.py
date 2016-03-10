@@ -3,7 +3,7 @@
 # license terms.
 
 from decimal import Decimal
-from trytond.model import fields
+from trytond.model import ModelView, fields
 from trytond.pyson import Eval, Not, Equal, Bool
 from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
@@ -100,6 +100,7 @@ class StatementLine:
         self._search_counterpart_line_reconciliation()
 
     @classmethod
+    @ModelView.button
     def post(cls, statement_lines):
         for st_line in statement_lines:
             for line in st_line.counterpart_lines:
@@ -107,6 +108,7 @@ class StatementLine:
         super(StatementLine, cls).post(statement_lines)
 
     @classmethod
+    @ModelView.button
     def cancel(cls, statement_lines):
         super(StatementLine, cls).cancel(statement_lines)
         cls.reset_counterpart_move(statement_lines)
