@@ -8,7 +8,7 @@ from trytond.pyson import Eval, Not, Equal, Bool
 from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
 
-__metaclass__ = PoolMeta
+
 __all__ = ['StatementLine', 'MoveLine', 'Reconciliation']
 
 
@@ -26,6 +26,7 @@ _ZERO = Decimal('0.0')
 
 
 class StatementLine:
+    __metaclass__ = PoolMeta
     __name__ = 'account.bank.statement.line'
 
     counterpart_lines = fields.One2Many('account.move.line',
@@ -254,6 +255,7 @@ class StatementLine:
 
 
 class MoveLine:
+    __metaclass__ = PoolMeta
     __name__ = 'account.move.line'
 
     bank_statement_line_counterpart = fields.Many2One(
@@ -273,6 +275,7 @@ class MoveLine:
 
 
 class Reconciliation:
+    __metaclass__ = PoolMeta
     __name__ = 'account.move.reconciliation'
 
     @classmethod
