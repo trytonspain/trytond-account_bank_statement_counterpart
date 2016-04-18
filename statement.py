@@ -125,10 +125,9 @@ class StatementLine:
         amount = super(StatementLine, self).on_change_with_moves_amount()
         if self.state == 'posted':
             return amount
-        Line = Pool().get('account.move.line')
-        lines = Line.browse([x.id for x in self.counterpart_lines])
 
-        amount += sum((l.debit or _ZERO) - (l.credit or _ZERO) for l in lines)
+        amount += sum((l.debit or _ZERO) - (l.credit or _ZERO) for l in
+            self.counterpart_lines)
         if self.company_currency:
             amount = self.company_currency.round(amount)
         return amount
