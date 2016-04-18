@@ -48,7 +48,6 @@ class StatementLine:
     @classmethod
     def __setup__(cls):
         super(StatementLine, cls).__setup__()
-        cls.moves_amount._field.on_change_with.add('counterpart_lines')
         cls._error_messages.update({
                 'same_debit_credit_account': ('Cannot create counterpart with'
                     ' same account "%(account)s", check line "%(line)s" and '
@@ -120,9 +119,9 @@ class StatementLine:
         if to_write:
             cls.write(*to_write)
 
-    @fields.depends('state')
-    def on_change_with_moves_amount(self):
-        amount = super(StatementLine, self).on_change_with_moves_amount()
+    @fields.depends('state', 'counterpart_lines')
+    def on_change_with_moves_amount(self, name=None):
+        amount = super(StatementLine, self).on_change_with_moves_amount(name)
         if self.state == 'posted':
             return amount
 
