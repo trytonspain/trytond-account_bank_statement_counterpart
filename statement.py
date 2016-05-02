@@ -32,6 +32,7 @@ class StatementLine:
     counterpart_lines = fields.One2Many('account.move.line',
         'bank_statement_line_counterpart', 'Counterpart',
         states=POSTED_STATES, domain=[
+            ('move.company', '=', Eval('company')),
             ('account.reconcile', '=', True),
             ('move_state', '=', 'posted'),
             ],
@@ -39,7 +40,9 @@ class StatementLine:
             ('reconciliation', '=', None),
             ('bank_statement_line_counterpart', '=', None),
             ('move_state', '=', 'posted'),
-            ('account.reconcile', '=', True)])
+            ('account.reconcile', '=', True),
+            ],
+        depends=['company'])
     account_date = fields.DateTime('Account Date',
             states={
                 'required': Bool(Eval('counterpart_lines')),
@@ -257,7 +260,8 @@ class MoveLine:
     __name__ = 'account.move.line'
 
     bank_statement_line_counterpart = fields.Many2One(
-        'account.bank.statement.line', 'Bank Statement Line Counterpart')
+        'account.bank.statement.line', 'Bank Statement Line Counterpart',
+        readonly=True)
 
     @classmethod
     def __setup__(cls):
