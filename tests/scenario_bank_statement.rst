@@ -61,7 +61,6 @@ Create Journals::
     ...     credit_account=cash,
     ...     debit_account=cash,
     ...     sequence=sequence,
-    ...     update_posted=True,
     ... )
     >>> account_journal.save()
     >>> StatementJournal = Model.get('account.bank.statement.journal')

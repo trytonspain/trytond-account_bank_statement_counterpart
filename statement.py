@@ -9,7 +9,7 @@ from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
 
 
-__all__ = ['StatementLine', 'MoveLine', 'Reconciliation']
+__all__ = ['StatementLine', 'Move', 'MoveLine', 'Reconciliation']
 
 
 CONFIRMED_STATES = {
@@ -138,6 +138,7 @@ class StatementLine:
     def reset_counterpart_move(cls, lines):
         pool = Pool()
         Reconciliation = pool.get('account.move.reconciliation')
+        BankReconciliation = pool.get('account.bank.reconciliation')
         Move = pool.get('account.move')
 
         delete_moves = []
@@ -150,9 +151,13 @@ class StatementLine:
                     if x.move != counterpart.move:
                         delete_moves.append(x.move)
                 delete_reconciliation.append(counterpart.reconciliation)
+        delete_bank_reconciliation = []
+        for move in delete_moves:
+            for line in move.lines:
+                delete_bank_reconciliation.extend(line.bank_lines)
         with Transaction().set_context(from_account_bank_statement_line=True):
+            BankReconciliation.delete(delete_bank_reconciliation)
             Reconciliation.delete(delete_reconciliation)
-            Move.draft(delete_moves)
             Move.delete(delete_moves)
 
     def create_move(self, line):
@@ -255,6 +260,18 @@ class StatementLine:
         return move_lines
 
 
+class Move:
+    __metaclass__ = PoolMeta
+    __name__ = 'account.move'
+
+    @classmethod
+    def check_modify(cls, *args, **kwargs):
+        if Transaction().context.get('from_account_bank_statement_line',
+                False):
+            return
+        return super(Move, cls).check_modify(*args, **kwargs)
+
+
 class MoveLine:
     __metaclass__ = PoolMeta
     __name__ = 'account.move.line'
@@ -274,6 +291,13 @@ class MoveLine:
             default = {}
         default['bank_statement_line_counterpart'] = None
         return super(MoveLine, cls).copy(lines, default=default)
+
+    @classmethod
+    def check_modify(cls, *args, **kwargs):
+        if Transaction().context.get('from_account_bank_statement_line',
+                False):
+            return
+        return super(MoveLine, cls).check_modify(*args, **kwargs)
 
 
 class Reconciliation:

@@ -8,6 +8,7 @@ from .statement import *
 
 def register():
     Pool.register(
+        Move,
         MoveLine,
         StatementLine,
         Reconciliation,
