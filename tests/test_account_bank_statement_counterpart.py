@@ -18,7 +18,8 @@ def suite():
     suite = trytond.tests.test_tryton.suite()
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
         AccountBankStatementCounterpartTestCase))
-    suite.addTests(doctest.DocFileSuite('scenario_bank_statement.rst',
+    suite.addTests(doctest.DocFileSuite(
+            'scenario_account_bank_statement_counterpart.rst',
             setUp=doctest_setup, tearDown=doctest_teardown, encoding='utf-8',
             checker=doctest_checker,
             optionflags=doctest.REPORT_ONLY_FIRST_FAILURE))

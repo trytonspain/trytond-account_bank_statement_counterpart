@@ -13,6 +13,8 @@ Imports::
     ...     get_company
     >>> from trytond.modules.account.tests.tools import create_fiscalyear, \
     ...     create_chart, get_accounts, create_tax, set_tax_code
+    >>> from trytond.modules.account_invoice.tests.tools import \
+    ...     set_fiscalyear_invoice_sequences
     >>> today = datetime.date.today()
     >>> now = datetime.datetime.now()
 
@@ -36,7 +38,8 @@ Create company::
 
 Create fiscal year::
 
-    >>> fiscalyear = create_fiscalyear(company)
+    >>> fiscalyear = set_fiscalyear_invoice_sequences(
+    ...     create_fiscalyear(company))
     >>> fiscalyear.click('create_period')
     >>> period = fiscalyear.periods[0]
 
