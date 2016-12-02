@@ -146,9 +146,11 @@ class StatementLine:
                         delete_moves.append(x.move)
                 delete_reconciliation.append(counterpart.reconciliation)
         with Transaction().set_context(from_account_bank_statement_line=True):
-            Reconciliation.delete(delete_reconciliation)
-            Move.draft(delete_moves)
-            Move.delete(delete_moves)
+            if delete_reconciliation:
+                Reconciliation.delete(delete_reconciliation)
+            if delete_moves:
+                Move.draft(delete_moves)
+                Move.delete(delete_moves)
 
     def create_move(self, line):
         pool = Pool()
