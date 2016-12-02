@@ -156,9 +156,12 @@ class StatementLine:
             for line in move.lines:
                 delete_bank_reconciliation.extend(line.bank_lines)
         with Transaction().set_context(from_account_bank_statement_line=True):
-            BankReconciliation.delete(delete_bank_reconciliation)
-            Reconciliation.delete(delete_reconciliation)
-            Move.delete(delete_moves)
+            if delete_bank_reconciliation:
+                BankReconciliation.delete(delete_bank_reconciliation)
+            if delete_reconciliation:
+                Reconciliation.delete(delete_reconciliation)
+            if delete_moves:
+                Move.delete(delete_moves)
 
     def create_move(self, line):
         pool = Pool()
