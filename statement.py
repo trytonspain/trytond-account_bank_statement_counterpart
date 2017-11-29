@@ -1,16 +1,15 @@
 # This file is part account_bank_statement_counterpart the COPYRIGHT file at
 # the top level of this repository contains the full copyright notices and
 # license terms.
-
+import pytz
 from decimal import Decimal
 from trytond.model import ModelView, fields
 from trytond.pyson import Eval, Not, Equal, Bool
 from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
-
+from trytond import backend
 
 __all__ = ['StatementLine', 'MoveLine', 'Reconciliation']
-
 
 CONFIRMED_STATES = {
     'readonly': Not(Equal(Eval('state'), 'draft'))
@@ -43,10 +42,13 @@ class StatementLine:
             ('account.reconcile', '=', True),
             ],
         depends=['company'])
-    account_date = fields.DateTime('Account Date',
-            states={
-                'required': Bool(Eval('counterpart_lines')),
-            })
+    account_date = fields.Function(fields.DateTime('Account Date'),
+        'get_date_utc', searcher='search_date_utc',
+        setter='set_date_utc')
+    account_date_utc = fields.DateTime('Account Date UTC',
+        states={
+            'required': Bool(Eval('counterpart_lines')),
+        })
 
     @classmethod
     def __setup__(cls):
@@ -63,9 +65,62 @@ class StatementLine:
                     'checked as "Bank Conciliation".'),
             })
 
+    @classmethod
+    def __register__(cls, module_name):
+        TableHandler = backend.get('TableHandler')
+
+        table = TableHandler(cls, module_name)
+
+        # Migration: rename account_date into account_date_utc
+        if (table.column_exist('account_date')
+                and not table.column_exist('account_date_utc')):
+            table.column_rename('account_date', 'account_date_utc')
+
+        super(StatementLine, cls).__register__(module_name)
+
     @fields.depends('date')
     def on_change_with_account_date(self):
         return self.date
+
+    @classmethod
+    def get_date_utc(cls, lines, names):
+        # get date + UTC
+        result = {}
+        for name in names:
+            result[name] = dict((l.id, None) for l in lines)
+
+        for line in lines:
+            for name in names:
+                line_date = getattr(line, name + '_utc')
+                if (line_date and line.statement
+                        and line.statement.company.timezone):
+                    timezone = pytz.timezone(line.statement.company.timezone)
+                    date = timezone.localize(line_date)
+                    line_date += date.utcoffset()
+                result[name][line.id] = line_date
+        return result
+
+    @classmethod
+    def search_date_utc(cls, name, clause):
+        return [(name + '_utc',) + tuple(clause[1:])]
+
+    @classmethod
+    def set_date_utc(cls, lines, name, value):
+        # set date to UTC
+        timezone = None
+        for line in lines:
+            if (line.statement and line.statement.company
+                    and line.statement.company.timezone):
+                timezone = line.statement.company.timezone
+                break
+        if timezone and value:
+            timezone = pytz.timezone(timezone)
+            date = timezone.localize(value)
+            value -= date.utcoffset()
+
+        cls.write(lines, {
+            name + '_utc': value,
+            })
 
     @classmethod
     def create(cls, vlist):
