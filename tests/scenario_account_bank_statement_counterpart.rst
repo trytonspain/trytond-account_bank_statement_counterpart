@@ -5,6 +5,7 @@ Account Bank Statement  Scenario
 Imports::
 
     >>> import datetime
+    >>> import pytz
     >>> from dateutil.relativedelta import relativedelta
     >>> from decimal import Decimal
     >>> from operator import attrgetter
@@ -25,6 +26,8 @@ Create company::
 
     >>> _ = create_company()
     >>> company = get_company()
+    >>> company.timezone = 'Europe/Madrid'
+    >>> company.save()
 
 Create fiscal year::
 
@@ -112,6 +115,13 @@ Create Bank Statement Lines::
     >>> statement_line, = statement.lines
     >>> statement_line.state
     u'confirmed'
+    >>> statement_line.account_date_utc != statement_line.account_date
+    True
+    >>> timezone = pytz.timezone('Europe/Madrid')
+    >>> date = timezone.localize(statement_line.account_date_utc)
+    >>> account_date = statement_line.account_date_utc + date.utcoffset()
+    >>> statement_line.account_date == account_date
+    True
     >>> reconcile1.bank_statement_line_counterpart = statement_line
     >>> reconcile1.save()
     >>> reconcile1.reload()
