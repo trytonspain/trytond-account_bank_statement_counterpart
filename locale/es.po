@@ -1,4 +1,4 @@
-# 
+#
 msgid ""
 msgstr "Content-Type: text/plain; charset=utf-8\n"
 
@@ -35,6 +35,10 @@ msgstr ""
 msgctxt "field:account.bank.statement.line,account_date:"
 msgid "Account Date"
 msgstr "Fecha de contabilización"
+
+msgctxt "field:account.bank.statement.line,account_date_utc:"
+msgid "Account Date UTC"
+msgstr "Fecha de contabilización UTC"
 
 msgctxt "field:account.bank.statement.line,counterpart_lines:"
 msgid "Counterpart"
