@@ -63,6 +63,9 @@ class StatementLine:
                 'debit_credit_account_not_bank_reconcile': (
                     'The credit or debit account of Journal "%s" is not '
                     'checked as "Bank Conciliation".'),
+                'not_found_counterparts': ('Not found a counterpart account. '
+                    'Check accounts from journal and move lines '
+                    'are not the same.'),
             })
 
     @classmethod
@@ -202,8 +205,10 @@ class StatementLine:
         accounts = [journal.credit_account, journal.debit_account]
 
         # Reconcile lines
-        counterpart, = [x for x in move.lines if x.account not in accounts]
-        Line.reconcile([counterpart, line])
+        counterparts = [x for x in move.lines if x.account not in accounts]
+        if not counterparts:
+            self.raise_user_error('not_found_counterparts')
+        Line.reconcile([counterparts[0], line])
 
         # Assign line to  Transactions
         st_move_line, = [x for x in move.lines if x.account in accounts]
