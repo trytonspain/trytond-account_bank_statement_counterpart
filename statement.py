@@ -24,8 +24,7 @@ POSTED_DEPENDS = ['state']
 _ZERO = Decimal('0.0')
 
 
-class StatementLine:
-    __metaclass__ = PoolMeta
+class StatementLine(metaclass=PoolMeta):
     __name__ = 'account.bank.statement.line'
 
     counterpart_lines = fields.One2Many('account.move.line',
@@ -283,8 +282,7 @@ class StatementLine:
         return move_lines
 
 
-class Move:
-    __metaclass__ = PoolMeta
+class Move(metaclass=PoolMeta):
     __name__ = 'account.move'
 
     @classmethod
@@ -295,8 +293,7 @@ class Move:
         return super(Move, cls).check_modify(*args, **kwargs)
 
 
-class MoveLine:
-    __metaclass__ = PoolMeta
+class MoveLine(metaclass=PoolMeta):
     __name__ = 'account.move.line'
 
     bank_statement_line_counterpart = fields.Many2One(
@@ -323,8 +320,7 @@ class MoveLine:
         return super(MoveLine, cls).check_modify(*args, **kwargs)
 
 
-class Reconciliation:
-    __metaclass__ = PoolMeta
+class Reconciliation(metaclass=PoolMeta):
     __name__ = 'account.move.reconciliation'
 
     @classmethod

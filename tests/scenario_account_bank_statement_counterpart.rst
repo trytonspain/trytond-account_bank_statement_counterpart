@@ -89,7 +89,7 @@ Create Move::
     >>> line2.credit = Decimal('80.0')
     >>> move.click('post')
     >>> move.state
-    u'posted'
+    'posted'
 
 Create Bank Move::
 
@@ -110,11 +110,11 @@ Create Bank Statement Lines::
     >>> statement.save()
     >>> statement.reload()
     >>> statement.state
-    u'draft'
+    'draft'
     >>> statement.click('confirm')
     >>> statement_line, = statement.lines
     >>> statement_line.state
-    u'confirmed'
+    'confirmed'
     >>> statement_line.account_date_utc != statement_line.account_date
     True
     >>> timezone = pytz.timezone('Europe/Madrid')
@@ -127,7 +127,7 @@ Create Bank Statement Lines::
     >>> reconcile1.reload()
     >>> statement_line.click('post')
     >>> statement_line.state
-    u'posted'
+    'posted'
     >>> move_line, = [x for x in reconcile1.reconciliation.lines if x !=
     ...    reconcile1]
     >>> move_line.account == reconcile1.account
