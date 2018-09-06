@@ -53,15 +53,14 @@ class StatementLine(metaclass=PoolMeta):
     def __setup__(cls):
         super(StatementLine, cls).__setup__()
         cls._error_messages.update({
-                'same_debit_credit_account': ('Cannot create counterpart with'
-                    ' same account "%(account)s", check line "%(line)s" and '
-                    'journal "%(journal)s".'),
-                'debit_credit_account_statement_journal': (
-                    'Journal "%s" has not got credit or debit account '
-                    'configured.'),
-                'debit_credit_account_not_bank_reconcile': (
-                    'The credit or debit account of Journal "%s" is not '
-                    'checked as "Bank Conciliation".'),
+                'account_not_bank_reconcile': (
+                    'The of Bank Statement Journal "%s" is not checked as '
+                    '"Bank Conciliation".'),
+                'account_statement_journal': ('Please provide '
+                    'debit and credit account on statement journal "%s".'),
+                'same_account': ('Account "%(account)s" in '
+                    'statement line "%(line)s" is the same as the one '
+                    'configured on journal "%(journal)s".'),
                 'not_found_counterparts': ('Not found a counterpart account. '
                     'Check accounts from journal and move lines '
                     'are not the same.'),
@@ -200,17 +199,17 @@ class StatementLine(metaclass=PoolMeta):
         move.save()
         Move.post([move])
 
-        journal = self.journal.journal
-        accounts = [journal.credit_account, journal.debit_account]
+        journal = self.journal
+        account = journal.account
 
         # Reconcile lines
-        counterparts = [x for x in move.lines if x.account not in accounts]
+        counterparts = [x for x in move.lines if x.account != account]
         if not counterparts:
             self.raise_user_error('not_found_counterparts')
         Line.reconcile([counterparts[0], line])
 
         # Assign line to  Transactions
-        st_move_line, = [x for x in move.lines if x.account in accounts]
+        st_move_line, = [x for x in move.lines if x.account == account]
         bank_line, = st_move_line.bank_lines
         bank_line.bank_statement_line = self
         bank_line.save()
@@ -245,27 +244,24 @@ class StatementLine(metaclass=PoolMeta):
             counterpart.second_currency = second_currency
 
         # Generate Bank Line.
-        journal = self.journal.journal
-        if amount >= _ZERO:
-            account = journal.credit_account
-        else:
-            account = journal.debit_account
+        journal = self.journal
+        account = journal.account
 
         if not account:
-            self.raise_user_error('debit_credit_account_statement_journal',
+            self.raise_user_error('account_statement_journal',
                 journal.rec_name)
         if not account.bank_reconcile:
-            self.raise_user_error('debit_credit_account_not_bank_reconcile',
+            self.raise_user_error('account_not_bank_reconcile',
                 journal.rec_name)
         if line.account == account:
-            self.raise_user_error('same_debit_credit_account', {
+            self.raise_user_error('same_account', {
                     'account': line.account.rec_name,
                     'line': line.rec_name,
-                    'journal': line.journal.rec_name,
+                    'journal': journal.rec_name,
                     })
 
         bank_move = MoveLine(
-            journal=journal,
+            journal=journal.journal,
             description=self.description,
             debit=amount >= _ZERO and amount or _ZERO,
             credit=amount < _ZERO and -amount or _ZERO,

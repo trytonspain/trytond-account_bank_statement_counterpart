@@ -61,14 +61,12 @@ Create Journals::
     >>> AccountJournal = Model.get('account.journal')
     >>> account_journal = AccountJournal(name='Statement',
     ...     type='cash',
-    ...     credit_account=cash,
-    ...     debit_account=cash,
     ...     sequence=sequence,
     ... )
     >>> account_journal.save()
     >>> StatementJournal = Model.get('account.bank.statement.journal')
     >>> statement_journal = StatementJournal(name='Test',
-    ...     journal=account_journal,
+    ...     journal=account_journal, account=cash,
     ...     )
     >>> statement_journal.save()
 
@@ -135,8 +133,7 @@ Create Bank Statement Lines::
     >>> move_line.credit
     Decimal('80.0')
     >>> move_line2, = [x for x in move_line.move.lines if x != move_line]
-    >>> move_line2.account in [statement_line.credit_account,
-    ...     statement_line.debit_account]
+    >>> move_line2.account == statement_line.account
     True
     >>> move_line2.debit
     Decimal('80.0')
