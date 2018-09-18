@@ -238,9 +238,10 @@ class StatementLine(metaclass=PoolMeta):
         if self.statement_currency != self.company_currency:
             with Transaction().set_context(date=self.date.date()):
                 amount_second_currency = abs(Currency.compute(
-                    self.statement_currency, amount, self.company_currency))
+                    self.company_currency, amount, self.statement_currency))
             second_currency = self.statement_currency
-            counterpart.amount_second_currency = amount_second_currency
+            counterpart.amount_second_currency = (amount_second_currency *
+                (-1 if line.debit - line.credit > 0 else 1))
             counterpart.second_currency = second_currency
 
         # Generate Bank Line.
