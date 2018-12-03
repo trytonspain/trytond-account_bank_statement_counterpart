@@ -86,7 +86,7 @@ class StatementLine(metaclass=PoolMeta):
     @classmethod
     def create(cls, vlist):
         for vals in vlist:
-            if vals.get('account_date'):
+            if vals.get('account_date') or not vals.get('date', None):
                 continue
             vals['account_date'] = vals['date']
         return super(StatementLine, cls).create(vlist)
