@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!-- This file is part of Tryton.  The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+<tryton>
+    <data group="1">
+      <record model="ir.message" id="account_not_bank_reconcile">
+          <field name="text">The of Bank Statement Journal "%(journal)s" is not checked as "Bank Conciliation".</field>
+      </record>
+      <record model="ir.message" id="account_statement_journal">
+          <field name="text">Please provide debit and credit account on statement journal "%(journal)s".</field>
+      </record>
+      <record model="ir.message" id="same_account">
+          <field name="text">Account "%(account)s" in statement line "%(line)s" is the same as the one configured on journal "%(journal)s".</field>
+      </record>
+      <record model="ir.message" id="not_found_counterparts">
+          <field name="text">Not found a counterpart account. Check accounts from journal and move lines are not the same.</field>
+      </record>
+      <record model="ir.message" id="reconciliation_cannot_delete">
+          <field name="text">Cannot break reconciliation "%(reconciliation)s" because line "%(line)s" has assigned to Bank Statement Line Please go to "%(statement_line)s" bank statement line to unreconcile</field>
+      </record>
+    </data>
+</tryton>

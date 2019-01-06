@@ -7,6 +7,9 @@ from trytond.pyson import Eval, Not, Equal, Bool
 from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
 from trytond import backend
+from trytond.i18n import gettext
+from trytond.exceptions import UserError
+
 
 __all__ = ['StatementLine', 'Move', 'MoveLine', 'Reconciliation']
 
@@ -48,23 +51,6 @@ class StatementLine(metaclass=PoolMeta):
         states={
             'required': Bool(Eval('counterpart_lines')),
         })
-
-    @classmethod
-    def __setup__(cls):
-        super(StatementLine, cls).__setup__()
-        cls._error_messages.update({
-                'account_not_bank_reconcile': (
-                    'The of Bank Statement Journal "%s" is not checked as '
-                    '"Bank Conciliation".'),
-                'account_statement_journal': ('Please provide '
-                    'debit and credit account on statement journal "%s".'),
-                'same_account': ('Account "%(account)s" in '
-                    'statement line "%(line)s" is the same as the one '
-                    'configured on journal "%(journal)s".'),
-                'not_found_counterparts': ('Not found a counterpart account. '
-                    'Check accounts from journal and move lines '
-                    'are not the same.'),
-            })
 
     @classmethod
     def __register__(cls, module_name):
@@ -205,7 +191,8 @@ class StatementLine(metaclass=PoolMeta):
         # Reconcile lines
         counterparts = [x for x in move.lines if x.account != account]
         if not counterparts:
-            self.raise_user_error('not_found_counterparts')
+            raise UserError(gettext(
+                'account_bank_statement_counterpart.not_found_counterparts'))
         Line.reconcile([counterparts[0], line])
 
         # Assign line to  Transactions
@@ -249,17 +236,19 @@ class StatementLine(metaclass=PoolMeta):
         account = journal.account
 
         if not account:
-            self.raise_user_error('account_statement_journal',
-                journal.rec_name)
+            raise UserError(gettext(
+                'account_bank_statement_counterpart.account_statement_journal',
+                journal=journal.rec_name))
         if not account.bank_reconcile:
-            self.raise_user_error('account_not_bank_reconcile',
-                journal.rec_name)
+            raise UserError(gettext(
+                'account_bank_statement_counterpart.account_not_bank_reconcile',
+                journal=journal.rec_name))
         if line.account == account:
-            self.raise_user_error('same_account', {
-                    'account': line.account.rec_name,
-                    'line': line.rec_name,
-                    'journal': journal.rec_name,
-                    })
+            raise UserError(gettext(
+                'account_bank_statement_counterpart.same_account',
+                    account=line.account.rec_name,
+                    line=line.rec_name,
+                    journal=journal.rec_name))
 
         bank_move = MoveLine(
             journal=journal.journal,
@@ -321,27 +310,16 @@ class Reconciliation(metaclass=PoolMeta):
     __name__ = 'account.move.reconciliation'
 
     @classmethod
-    def __setup__(cls):
-        super(Reconciliation, cls).__setup__()
-        cls._error_messages.update({
-                'reconciliation_cannot_delete': ('Cannot break reconciliation '
-                    '"%(reconciliation)s" because '
-                    'line "%(line)s" has assigned to Bank Statement Line '
-                    'Please go to "%(statement_line)s" bank statement line '
-                    'to unreconcile'),
-                })
-
-    @classmethod
     def delete(cls, reconciliations):
         for reconciliation in reconciliations:
             for line in reconciliation.lines:
                 for bank_line in line.bank_lines:
                     if bank_line.bank_statement_line:
-                        reconciliation.raise_user_error(
-                            'reconciliation_cannot_delete', {
-                                'reconciliation': reconciliation.rec_name,
-                                'line': bank_line.rec_name,
-                                'statement_line': (
+                        raise UserError(gettext(
+                            'account_bank_statement_counterpart.reconciliation_cannot_delete',
+                                reconciliation=reconciliation.rec_name,
+                                line=bank_line.rec_name,
+                                statement_line=(
                                     bank_line.bank_statement_line.rec_name)
-                                })
+                                ))
         super(Reconciliation, cls).delete(reconciliations)
