@@ -11,6 +11,6 @@
         expr="/form/group[@id='general']/field[@name='date']"
         position="after">
         <label name="account_date"/>
-        <field name="account_date"/>
+        <field name="account_date" widget="date"/>
     </xpath>
 </data>
