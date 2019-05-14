@@ -192,6 +192,7 @@ class StatementLine(metaclass=PoolMeta):
         period_id = Period.find(self.company, date=self.account_date.date())
         move_lines = self._get_counterpart_move_lines(line)
         move = Move(
+            origin=self,
             period=period_id,
             journal=self.journal.journal,
             lines=move_lines,
@@ -315,6 +316,11 @@ class MoveLine(metaclass=PoolMeta):
                 False):
             return
         return super(MoveLine, cls).check_modify(*args, **kwargs)
+
+    @classmethod
+    def _get_origin(cls):
+        return (super(MoveLine, cls)._get_origin()
+            + ['account.bank.statement'])
 
 
 class Reconciliation(metaclass=PoolMeta):
