@@ -319,13 +319,14 @@ class Reconciliation(metaclass=PoolMeta):
     def delete(cls, reconciliations):
         for reconciliation in reconciliations:
             for line in reconciliation.lines:
-                for bank_line in line.bank_lines:
-                    if bank_line.bank_statement_line:
-                        raise UserError(gettext(
-                            'account_bank_statement_counterpart.reconciliation_cannot_delete',
-                                reconciliation=reconciliation.rec_name,
-                                line=bank_line.rec_name,
-                                statement_line=(
-                                    bank_line.bank_statement_line.rec_name)
-                                ))
+                for l in line.move.lines:
+                    for bank_line in line.bank_lines:
+                        if bank_line.bank_statement_line:
+                            raise UserError(gettext(
+                                'account_bank_statement_counterpart.reconciliation_cannot_delete',
+                                    reconciliation=reconciliation.rec_name,
+                                    line=bank_line.rec_name,
+                                    statement_line=(
+                                        bank_line.bank_statement_line.rec_name)
+                                    ))
         super(Reconciliation, cls).delete(reconciliations)
