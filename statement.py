@@ -178,7 +178,7 @@ class StatementLine(metaclass=PoolMeta):
         period_id = Period.find(self.company, date=self.account_date.date())
         move_lines = self._get_counterpart_move_lines(line)
         move = Move(
-            origin=self,
+            origin=self.statement,
             period=period_id,
             journal=self.journal.journal,
             lines=move_lines,
@@ -196,7 +196,7 @@ class StatementLine(metaclass=PoolMeta):
                 'account_bank_statement_counterpart.not_found_counterparts'))
         Line.reconcile([counterparts[0], line])
 
-        # Assign line to  Transactions
+        # Assign line to Transactions
         st_move_line, = [x for x in move.lines if x.account == account]
         bank_line, = st_move_line.bank_lines
         bank_line.bank_statement_line = self
@@ -257,7 +257,8 @@ class StatementLine(metaclass=PoolMeta):
             debit=amount >= _ZERO and amount or _ZERO,
             credit=amount < _ZERO and -amount or _ZERO,
             account=account,
-            origin=self.statement,
+            origin=self,
+            move_origin=self.statement,
             second_currency=second_currency,
             amount_second_currency=amount_second_currency,
             )
@@ -278,6 +279,13 @@ class Move(metaclass=PoolMeta):
                 False):
             return
         return super(Move, cls).check_modify(*args, **kwargs)
+
+    @classmethod
+    def _get_origin(cls):
+        'Return list of Model names for origin Reference'
+        result = super(Move, cls)._get_origin()
+        result.append('account.bank.statement')
+        return result
 
 
 class MoveLine(metaclass=PoolMeta):
