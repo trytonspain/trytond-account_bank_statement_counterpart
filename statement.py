@@ -91,18 +91,21 @@ class StatementLine(metaclass=PoolMeta):
             vals['account_date'] = vals['date']
         return super(StatementLine, cls).create(vlist)
 
+    def _search_counterpart_line_reconciliation_domain(self):
+        return [
+            ('reconciliation', '=', None),
+            ('bank_statement_line_counterpart', '=', None),
+            ('move_state', '=', 'posted'),
+            ('account.reconcile', '=', True),
+            ]
+
     def _search_counterpart_line_reconciliation(self):
         search_amount = self.company_amount - self.moves_amount
         if search_amount == _ZERO:
             return
 
         MoveLine = Pool().get('account.move.line')
-        domain = [
-            ('reconciliation', '=', None),
-            ('bank_statement_line_counterpart', '=', None),
-            ('move_state', '=', 'posted'),
-            ('account.reconcile', '=', True),
-            ]
+        domain = self._search_counterpart_line_reconciliation_domain()
         if search_amount > 0:
             domain.append(('debit', '=', abs(search_amount)))
         else:
