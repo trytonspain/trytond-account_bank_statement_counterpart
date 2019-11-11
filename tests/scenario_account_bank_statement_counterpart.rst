@@ -104,7 +104,6 @@ Create Bank Statement Lines::
     >>> statement_line.date = now
     >>> statement_line.description = 'Statement Line'
     >>> statement_line.amount = Decimal('80.0')
-    >>> statement_line.party = party
     >>> statement.save()
     >>> statement.reload()
     >>> statement.state
