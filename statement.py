@@ -328,6 +328,10 @@ class Reconciliation(metaclass=PoolMeta):
 
     @classmethod
     def delete(cls, reconciliations):
+        from_statement = Transaction().context.get(
+            'from_account_bank_statement_line', False)
+        if from_statement:
+            return super(Reconciliation, cls).delete(reconciliations)
         for reconciliation in reconciliations:
             for line in reconciliation.lines:
                 for l in line.move.lines:
