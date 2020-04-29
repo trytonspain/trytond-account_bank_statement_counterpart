@@ -332,16 +332,41 @@ class Reconciliation(metaclass=PoolMeta):
             'from_account_bank_statement_line', False)
         if from_statement:
             return super(Reconciliation, cls).delete(reconciliations)
-        for reconciliation in reconciliations:
-            for line in reconciliation.lines:
-                for l in line.move.lines:
-                    for bank_line in line.bank_lines:
-                        if bank_line.bank_statement_line:
-                            raise UserError(gettext(
-                                'account_bank_statement_counterpart.reconciliation_cannot_delete',
-                                    reconciliation=reconciliation.rec_name,
-                                    line=bank_line.rec_name,
-                                    statement_line=(
-                                        bank_line.bank_statement_line.rec_name)
-                                    ))
-        super(Reconciliation, cls).delete(reconciliations)
+
+        cls.check_bank_statement_lines(reconciliations)
+        return super(Reconciliation, cls).delete(reconciliations)
+
+    @classmethod
+    def check_bank_statement_lines(cls, reconciliations):
+        BankLines = Pool().get('account.bank.reconciliation')
+
+        moves = set(
+            line.move
+            for reconciliation in reconciliations
+            for line in reconciliation.lines
+        )
+
+        lines_with_statement = BankLines.search(
+            [
+                ('move_line.move', 'in', moves),
+                ('bank_statement_line', '!=', None),
+            ],
+            limit=1,
+        )
+
+        if lines_with_statement:
+            bank_line = lines_with_statement[0]
+
+            error_reconciliation = next(
+                reconciliation
+                for reconciliation in reconciliations
+                for line in reconciliation.lines
+                if bank_line.move_line.move == line.move
+            )
+            raise UserError(gettext(
+                'account_bank_statement_counterpart.reconciliation_cannot_delete',
+                    reconciliation=error_reconciliation.rec_name,
+                    line=bank_line.rec_name,
+                    statement_line=(
+                        bank_line.bank_statement_line.rec_name)
+                    ))
