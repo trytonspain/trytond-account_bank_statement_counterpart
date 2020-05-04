@@ -331,7 +331,7 @@ class Reconciliation(metaclass=PoolMeta):
         from_statement = Transaction().context.get(
             'from_account_bank_statement_line', False)
         if from_statement:
-            super(Reconciliation, cls).delete(reconciliations)
+            return super(Reconciliation, cls).delete(reconciliations)
 
         cls.check_bank_statement_lines(reconciliations)
         return super(Reconciliation, cls).delete(reconciliations)
