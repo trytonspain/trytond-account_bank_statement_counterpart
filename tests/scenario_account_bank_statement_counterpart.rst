@@ -1,6 +1,6 @@
-================================
-Account Bank Statement  Scenario
-================================
+===========================================
+Account Bank Statement Counterpart Scenario
+===========================================
 
 Imports::
 
@@ -14,11 +14,11 @@ Imports::
     >>> from trytond.modules.company.tests.tools import create_company, \
     ...     get_company
     >>> from trytond.modules.account.tests.tools import create_fiscalyear, \
-    ...     create_chart, get_accounts
+    ...     create_chart, get_accounts, create_tax
     >>> today = datetime.date.today()
     >>> now = datetime.datetime.now()
 
-Install account_bank_statement_counterpart Module::
+Install account_bank_statement_counterpart::
 
     >>> config = activate_modules('account_bank_statement_counterpart')
 
@@ -29,11 +29,15 @@ Create company::
     >>> company.timezone = 'Europe/Madrid'
     >>> company.save()
 
+Reload the context::
+
+    >>> User = Model.get('res.user')
+    >>> config._context = User.get_preferences(True, config.context)
+
 Create fiscal year::
 
     >>> fiscalyear = create_fiscalyear(company)
     >>> fiscalyear.click('create_period')
-    >>> period = fiscalyear.periods[0]
 
 Create chart of accounts::
 
@@ -44,7 +48,13 @@ Create chart of accounts::
     >>> expense = accounts['expense']
     >>> cash = accounts['cash']
     >>> cash.bank_reconcile = True
+    >>> cash.reconcile = True
     >>> cash.save()
+
+Create tax::
+
+    >>> tax = create_tax(Decimal('.10'))
+    >>> tax.save()
 
 Create party::
 
@@ -52,7 +62,7 @@ Create party::
     >>> party = Party(name='Party')
     >>> party.save()
 
-Create Journals::
+Create Journal::
 
     >>> Sequence = Model.get('ir.sequence')
     >>> sequence = Sequence(name='Bank', code='account.journal',
@@ -61,16 +71,17 @@ Create Journals::
     >>> AccountJournal = Model.get('account.journal')
     >>> account_journal = AccountJournal(name='Statement',
     ...     type='cash',
-    ...     sequence=sequence,
-    ... )
+    ...     sequence=sequence)
     >>> account_journal.save()
+
+Create Statement Journal::
+
     >>> StatementJournal = Model.get('account.bank.statement.journal')
     >>> statement_journal = StatementJournal(name='Test',
-    ...     journal=account_journal, account=cash,
-    ...     )
+    ...     journal=account_journal, currency=company.currency, account=cash)
     >>> statement_journal.save()
 
-Create Move::
+Create Bank Move::
 
     >>> period = fiscalyear.periods[0]
     >>> Move = Model.get('account.move')
@@ -88,65 +99,56 @@ Create Move::
     >>> move.click('post')
     >>> move.state
     'posted'
+    >>> line1, line2 = move.lines
 
-Create Bank Move::
-
-    >>> reconcile1, = [l for l in move.lines if l.account == receivable]
-
-Create Bank Statement::
+Create Bank Statement With Different Curreny::
 
     >>> BankStatement = Model.get('account.bank.statement')
     >>> statement = BankStatement(journal=statement_journal, date=now)
 
 Create Bank Statement Lines::
 
-    >>> statement_line = statement.lines.new()
+    >>> StatementLine = Model.get('account.bank.statement.line')
+    >>> statement_line = StatementLine()
+    >>> statement.lines.append(statement_line)
     >>> statement_line.date = now
     >>> statement_line.description = 'Statement Line'
     >>> statement_line.amount = Decimal('80.0')
-    >>> statement.save()
-    >>> statement.reload()
-    >>> statement.state
-    'draft'
+    >>> statement_line.party = party
     >>> statement.click('confirm')
+    >>> statement.state == 'confirmed'
+    True
+
     >>> statement_line, = statement.lines
-    >>> statement_line.state
-    'confirmed'
-    >>> statement_line.account_date_utc != statement_line.account_date
-    True
-    >>> timezone = pytz.timezone('Europe/Madrid')
-    >>> date = timezone.localize(statement_line.account_date_utc)
-    >>> account_date = statement_line.account_date_utc + date.utcoffset()
-    >>> statement_line.account_date == account_date
-    True
-    >>> reconcile1.bank_statement_line_counterpart = statement_line
-    >>> reconcile1.save()
-    >>> reconcile1.reload()
+    >>> statement_line.reload()
+    >>> line2.reload()
+    >>> statement_line.counterpart_lines.append(line2)
+    >>> statement_line.save()
     >>> statement_line.click('post')
-    >>> statement_line.state
-    'posted'
-    >>> move_line, = [x for x in reconcile1.reconciliation.lines if x !=
-    ...    reconcile1]
-    >>> move_line.account == reconcile1.account
+
+Check reconciliation::
+
+    >>> line2.reload()
+    >>> move_line, = [x for x in line2.reconciliation.lines if x != line2]
+    >>> move_line.account == line2.account
     True
-    >>> move_line.credit
-    Decimal('80.0')
+    >>> move_line.credit ==  Decimal('80.0')
+    True
     >>> move_line2, = [x for x in move_line.move.lines if x != move_line]
     >>> move_line2.account == statement_line.account
     True
-    >>> move_line2.debit
-    Decimal('80.0')
+    >>> move_line2.debit == Decimal('80.0')
+    True
     >>> receivable.reload()
-    >>> receivable.balance
-    Decimal('0.00')
+    >>> receivable.balance == Decimal('0.00')
+    True
 
-Cancel the line and theck all the moves have been cleared::
+Not allow cancel when period is closed::
 
-    >>> statement_line.click('cancel')
-    >>> len(statement_line.counterpart_lines)
-    0
-    >>> len(statement_line.bank_lines)
-    0
-    >>> receivable.reload()
-    >>> receivable.balance
-    Decimal('80.00')
+    >>> Period = Model.get('account.period')
+    >>> periods = Period.find([])
+    >>> Period.click(periods, 'close')
+    >>> statement_line.click('cancel') # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+        ...
+    PeriodNotFoundError: ...
