@@ -109,6 +109,7 @@ Create Bank Statement With Different Curreny::
 Create Bank Statement Lines::
 
     >>> StatementLine = Model.get('account.bank.statement.line')
+    >>> Line = Model.get('account.move.line')
     >>> statement_line = StatementLine()
     >>> statement.lines.append(statement_line)
     >>> statement_line.date = now
@@ -122,7 +123,7 @@ Create Bank Statement Lines::
     >>> statement_line, = statement.lines
     >>> statement_line.reload()
     >>> line2.reload()
-    >>> statement_line.counterpart_lines.append(line2)
+    >>> statement_line.counterpart_lines.append(Line(line2.id))
     >>> statement_line.save()
     >>> statement_line.click('post')
 
