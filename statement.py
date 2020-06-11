@@ -107,9 +107,23 @@ class StatementLine(metaclass=PoolMeta):
         super(StatementLine, self)._search_reconciliation()
         self._search_counterpart_line_reconciliation()
 
+    def _check_period(lines):
+        Period = Pool().get('account.period')
+
+        company_ids = set(l.company.id for l in lines)
+        check_lines = dict((c, set()) for c in company_ids)
+
+        for line in lines:
+            check_lines.setdefault(line.company.id, set()).add(line.account_date)
+
+        for company, dates in check_lines.items():
+            for date in set(dates):
+                Period.find(company, date=date.date())
+
     @classmethod
     @ModelView.button
     def post(cls, statement_lines):
+        cls._check_period(statement_lines)
         for st_line in statement_lines:
             for line in st_line.counterpart_lines:
                 st_line.create_move(line)
@@ -118,6 +132,7 @@ class StatementLine(metaclass=PoolMeta):
     @classmethod
     @ModelView.button
     def cancel(cls, statement_lines):
+        cls._check_period(statement_lines)
         super(StatementLine, cls).cancel(statement_lines)
         cls.reset_counterpart_move(statement_lines)
         to_write = []
