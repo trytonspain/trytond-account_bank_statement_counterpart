@@ -54,9 +54,7 @@ class StatementLine(metaclass=PoolMeta):
 
     @classmethod
     def __register__(cls, module_name):
-        TableHandler = backend.get('TableHandler')
-
-        table = TableHandler(cls, module_name)
+        table = backend.TableHandler(cls, module_name)
 
         # Migration: rename account_date into account_date_utc
         if (table.column_exist('account_date')
