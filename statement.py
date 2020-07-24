@@ -337,6 +337,24 @@ class MoveLine(metaclass=PoolMeta):
         return (super(MoveLine, cls)._get_origin()
             + ['account.bank.statement'])
 
+    @classmethod
+    def delete(cls, lines):
+        pool = Pool()
+        BankMoveLine = pool.get('account.bank.statement.move.line')
+
+        moves = set(line.move for line in lines)
+        bank_move_lines = BankMoveLine.search([
+                ('move', 'in', moves),
+                ], limit=1)
+        if bank_move_lines:
+            bank_move_line = bank_move_lines[0]
+            raise UserError(gettext(
+                'account_bank_statement_counterpart.move_line_cannot_delete',
+                    move=bank_move_line.move.number,
+                    statement_line=bank_move_line.line.rec_name,
+                    ))
+        return super().delete(lines)
+
 
 class Reconciliation(metaclass=PoolMeta):
     __name__ = 'account.move.reconciliation'
@@ -359,13 +377,13 @@ class Reconciliation(metaclass=PoolMeta):
             line.move
             for reconciliation in reconciliations
             for line in reconciliation.lines
+            if line.bank_statement_line_counterpart
         )
 
-        lines_with_statement = BankLines.search(
-            [
+        lines_with_statement = BankLines.search([
                 ('move_line.move', 'in', moves),
                 ('bank_statement_line', '!=', None),
-            ],
+                ],
             limit=1,
         )
 
