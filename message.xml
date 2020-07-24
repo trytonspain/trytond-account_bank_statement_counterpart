@@ -18,5 +18,8 @@ this repository contains the full copyright notices and license terms. -->
       <record model="ir.message" id="reconciliation_cannot_delete">
           <field name="text">Cannot break reconciliation "%(reconciliation)s" because line "%(line)s" has assigned to Bank Statement Line Please go to "%(statement_line)s" bank statement line to unreconcile</field>
       </record>
+      <record model="ir.message" id="move_line_cannot_delete">
+          <field name="text">Cannot delete move line from move "%(move)s" because has assigned to Bank Statement Line. Please go to "%(statement_line)s" bank statement line to delete this move line.</field>
+      </record>
     </data>
 </tryton>
