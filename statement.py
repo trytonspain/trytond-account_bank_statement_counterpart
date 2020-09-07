@@ -380,8 +380,10 @@ class Reconciliation(metaclass=PoolMeta):
             if line.bank_statement_line_counterpart
         )
 
-        lines_with_statement = BankLines.search([
-                ('move_line.move', 'in', moves),
+        lines_with_statement = BankLines.search(
+            [
+                ('move_line', 'in', (line for reconciliation in reconciliations
+                        for line in reconciliation.lines)),
                 ('bank_statement_line', '!=', None),
                 ],
             limit=1,
