@@ -361,7 +361,8 @@ class Reconciliation(metaclass=PoolMeta):
 
         lines_with_statement = BankLines.search(
             [
-                ('move_line.move', 'in', moves),
+                ('move_line', 'in', (line for reconciliation in reconciliations
+                        for line in reconciliation.lines)),
                 ('bank_statement_line', '!=', None),
             ],
             limit=1,
