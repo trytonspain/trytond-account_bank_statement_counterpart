@@ -2,14 +2,10 @@
 <!--The COPYRIGHT file at the top level of this repository contains the full
      copyright notices and license terms. -->
 <data>
-    <xpath
-        expr="/form/group[@id='amounts']"
-        position="after">
-        <field name="counterpart_lines" colspan="4" widget="many2many"/>
+    <xpath expr="/form/group[@id='amounts']" position="after">
+        <field name="counterpart_lines" colspan="4" widget="many2many" view_ids="account_bank_statement_counterpart.move_line_bank_statement_lines"/>
     </xpath>
-    <xpath
-        expr="/form/group[@id='general']/field[@name='date']"
-        position="after">
+    <xpath expr="/form/group[@id='general']/field[@name='date']" position="after">
         <label name="account_date"/>
         <field name="account_date" widget="date"/>
     </xpath>
