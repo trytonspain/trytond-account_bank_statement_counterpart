@@ -341,18 +341,28 @@ class MoveLine(metaclass=PoolMeta):
     def delete(cls, lines):
         pool = Pool()
         BankMoveLine = pool.get('account.bank.statement.move.line')
+        BankLines = Pool().get('account.bank.reconciliation')
 
-        moves = set(line.move for line in lines)
-        bank_move_lines = BankMoveLine.search([
-                ('move', 'in', moves),
-                ], limit=1)
-        if bank_move_lines:
-            bank_move_line = bank_move_lines[0]
-            raise UserError(gettext(
-                'account_bank_statement_counterpart.move_line_cannot_delete',
-                    move=bank_move_line.move.number,
-                    statement_line=bank_move_line.line.rec_name,
-                    ))
+        if not Transaction().context.get('from_account_bank_statement_line',
+                False):
+            moves = set(line.move for line in lines)
+            bank_move_lines = BankMoveLine.search([
+                    ('move', 'in', moves),
+                    ], limit=1)
+            if bank_move_lines:
+                bank_move_line = bank_move_lines[0]
+                raise UserError(gettext(
+                    'account_bank_statement_counterpart.\
+                        move_line_cannot_delete',
+                        move=bank_move_line.move.number,
+                        statement_line=bank_move_line.line.rec_name,
+                        ))
+
+        bank_lines = BankLines.search([
+                ('move_line', 'in', lines),
+                ])
+        BankLines.delete(bank_lines)
+
         return super().delete(lines)
 
 
