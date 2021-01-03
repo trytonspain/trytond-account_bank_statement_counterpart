@@ -373,45 +373,21 @@ class Reconciliation(metaclass=PoolMeta):
     def delete(cls, reconciliations):
         from_statement = Transaction().context.get(
             'from_account_bank_statement_line', False)
-        if from_statement:
-            return super(Reconciliation, cls).delete(reconciliations)
-
-        cls.check_bank_statement_lines(reconciliations)
+        if not from_statement:
+            cls.check_bank_statement_lines(reconciliations)
         return super(Reconciliation, cls).delete(reconciliations)
 
     @classmethod
     def check_bank_statement_lines(cls, reconciliations):
-        BankLines = Pool().get('account.bank.reconciliation')
+        BankLine = Pool().get('account.bank.statement.line')
 
-        moves = set(
-            line.move
-            for reconciliation in reconciliations
+        lines = [line for reconciliation in reconciliations
             for line in reconciliation.lines
-            if line.bank_statement_line_counterpart
-        )
+            if isinstance(line.origin, BankLine)]
 
-        lines_with_statement = BankLines.search(
-            [
-                ('move_line', 'in', (line for reconciliation in reconciliations
-                        for line in reconciliation.lines)),
-                ('bank_statement_line', '!=', None),
-                ],
-            limit=1,
-        )
-
-        if lines_with_statement:
-            bank_line = lines_with_statement[0]
-
-            error_reconciliation = next(
-                reconciliation
-                for reconciliation in reconciliations
-                for line in reconciliation.lines
-                if bank_line.move_line.move == line.move
-            )
+        if lines:
+            line = lines[0]
             raise UserError(gettext(
                 'account_bank_statement_counterpart.reconciliation_cannot_delete',
-                    reconciliation=error_reconciliation.rec_name,
-                    line=bank_line.rec_name,
-                    statement_line=(
-                        bank_line.bank_statement_line.rec_name)
+                    bank_line=line.origin.rec_name
                     ))
