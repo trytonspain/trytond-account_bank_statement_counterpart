@@ -352,8 +352,8 @@ class MoveLine(metaclass=PoolMeta):
             if bank_move_lines:
                 bank_move_line = bank_move_lines[0]
                 raise UserError(gettext(
-                    'account_bank_statement_counterpart.\
-                        move_line_cannot_delete',
+                    'account_bank_statement_counterpart.'
+                        'move_line_cannot_delete',
                         move=bank_move_line.move.number,
                         statement_line=bank_move_line.line.rec_name,
                         ))
