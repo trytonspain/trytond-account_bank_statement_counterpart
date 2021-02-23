@@ -158,7 +158,6 @@ class StatementLine(metaclass=PoolMeta):
     def reset_counterpart_move(cls, lines):
         pool = Pool()
         Reconciliation = pool.get('account.move.reconciliation')
-        BankReconciliation = pool.get('account.bank.reconciliation')
         Move = pool.get('account.move')
 
         delete_moves = []
@@ -171,13 +170,7 @@ class StatementLine(metaclass=PoolMeta):
                     if x.move != counterpart.move:
                         delete_moves.append(x.move)
                 delete_reconciliation.append(counterpart.reconciliation)
-        delete_bank_reconciliation = []
-        for move in delete_moves:
-            for line in move.lines:
-                delete_bank_reconciliation.extend(line.bank_lines)
         with Transaction().set_context(from_account_bank_statement_line=True):
-            if delete_bank_reconciliation:
-                BankReconciliation.delete(delete_bank_reconciliation)
             if delete_reconciliation:
                 Reconciliation.delete(delete_reconciliation)
             if delete_moves:
@@ -214,11 +207,6 @@ class StatementLine(metaclass=PoolMeta):
                 'account_bank_statement_counterpart.not_found_counterparts'))
         Line.reconcile([counterparts[0], line])
 
-        # Assign line to Transactions
-        st_move_line, = [x for x in move.lines if x.account == account]
-        bank_line, = st_move_line.bank_lines
-        bank_line.bank_statement_line = self
-        bank_line.save()
         self.save()
 
     def _get_counterpart_move_lines(self, line):
@@ -236,7 +224,7 @@ class StatementLine(metaclass=PoolMeta):
         counterpart.account = line.account
         if line.account.party_required:
             counterpart.party = line.party
-        counterpart.origin = str(self)
+
 
         amount = line.debit - line.credit
         amount_second_currency = None
@@ -258,10 +246,6 @@ class StatementLine(metaclass=PoolMeta):
             raise UserError(gettext(
                 'account_bank_statement_counterpart.account_statement_journal',
                 journal=journal.rec_name))
-        if not account.bank_reconcile:
-            raise UserError(gettext(
-                'account_bank_statement_counterpart.account_not_bank_reconcile',
-                journal=journal.rec_name))
         if line.account == account:
             raise UserError(gettext(
                 'account_bank_statement_counterpart.same_account',
@@ -275,7 +259,6 @@ class StatementLine(metaclass=PoolMeta):
             debit=amount >= _ZERO and amount or _ZERO,
             credit=amount < _ZERO and -amount or _ZERO,
             account=account,
-            origin=self,
             move_origin=self.statement,
             second_currency=second_currency,
             amount_second_currency=amount_second_currency,
@@ -341,7 +324,6 @@ class MoveLine(metaclass=PoolMeta):
     def delete(cls, lines):
         pool = Pool()
         BankMoveLine = pool.get('account.bank.statement.move.line')
-        BankLines = Pool().get('account.bank.reconciliation')
 
         if not Transaction().context.get('from_account_bank_statement_line',
                 False):
@@ -357,11 +339,6 @@ class MoveLine(metaclass=PoolMeta):
                         move=bank_move_line.move.number,
                         statement_line=bank_move_line.line.rec_name,
                         ))
-
-        bank_lines = BankLines.search([
-                ('move_line', 'in', lines),
-                ])
-        BankLines.delete(bank_lines)
 
         return super().delete(lines)
 
