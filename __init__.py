@@ -11,5 +11,4 @@ def register():
         Move,
         MoveLine,
         StatementLine,
-        Reconciliation,
         module='account_bank_statement_counterpart', type_='model')
